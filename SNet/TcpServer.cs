@@ -19,7 +19,7 @@ namespace SNet
                 skt.Bind(new IPEndPoint(IPAddress.Parse(ip), port));
                 skt.Listen(backlog);
                 LogHelper.ColorLog(AsyncLogColor.Green, "Server Start...");
-                skt.BeginAccept(new AsyncCallback(ClientConnectCB), null);
+                skt.BeginAccept(OnClientConnect, null);
             }
             catch (Exception e)
             {
@@ -27,7 +27,7 @@ namespace SNet
             }
         }
 
-        private void ClientConnectCB(IAsyncResult ar)
+        private void OnClientConnect(IAsyncResult ar)
         {
             T session = new T();
             try
@@ -59,7 +59,7 @@ namespace SNet
                     });
                 }
 
-                skt.BeginAccept(new AsyncCallback(ClientConnectCB), null);
+                skt.BeginAccept(OnClientConnect, null);
             }
             catch (Exception e)
             {

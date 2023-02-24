@@ -8,13 +8,13 @@ namespace ClientTest
         public override void OnConnected()
         {
             base.OnConnected();
-            LogHelper.Log("连接成功："+this.GetHashCode());
+            LogHelper.Log("连接成功："+this.GetRemoteEndPoint());
         }
 
         public override void OnDisConnected()
         {
             base.OnDisConnected();
-            LogHelper.Log("断开连接："+this.GetHashCode());
+            LogHelper.Log("断开连接："+this.GetRemoteEndPoint());
         }
 
         public override void OnReceive(byte[] data)
