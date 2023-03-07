@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SNet
 {
@@ -26,7 +27,7 @@ namespace SNet
 
         private DataBuffer buffer = new DataBuffer();
 
-        public virtual void OnReceive(byte[] data)
+        public virtual void OnReceive(Session session,byte[] data)
         {
         }
 
@@ -36,6 +37,11 @@ namespace SNet
 
         public virtual void OnDisConnected()
         {
+        }
+
+        public virtual void OnDestroy()
+        {
+            
         }
 
         public void Start(Socket skt, Action closeCB)
@@ -76,7 +82,7 @@ namespace SNet
 
                 byte[] tmpBuffer = new byte[len];
                 Array.Copy(buffer.Buffer, tmpBuffer, len);
-                OnReceive(tmpBuffer);
+                OnReceive(this,tmpBuffer);
                 //判断接收长度是否等于Capacity
                 buffer.CheckBuffer(len);
                 socket.BeginReceive(buffer.Buffer, 0, buffer.Capacity, SocketFlags.None, ReceiveData, null);
@@ -107,6 +113,42 @@ namespace SNet
                     LogHelper.Error("SndMsgNSError:{0}.", e.Message);
                 }
             }
+        }
+
+        public Task<bool> SendMsgAsync(byte[] data)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            if (sessionState != AsyncSessionState.Connected)
+            {
+                LogHelper.Warn("Connection is Disconnected.can not send net msg.");
+            }
+            else
+            {
+                NetworkStream ns = null;
+                try
+                {
+                    socket.BeginSend(data, 0, data.Length, 0, delegate(IAsyncResult ar)
+                    {
+                        try
+                        {
+                            OnSendCallback(ar);
+                            tcs.SetResult(true);
+                        }
+                        catch (Exception e)
+                        {
+                            tcs.SetException(e);
+                            LogHelper.Error("SndMsgNSError:{0}.", e.Message);
+                        }
+                    }, null);
+
+                }
+                catch (Exception e)
+                {
+                    LogHelper.Error("SndMsgNSError:{0}.", e.Message);
+                }
+            }
+
+            return tcs.Task;
         }
 
         private void OnSendCallback(IAsyncResult ar)
@@ -140,6 +182,8 @@ namespace SNet
             {
                 LogHelper.Error("ShutDown Socket Error:{0}", e.Message);
             }
+            
+            OnDestroy();
         }
 
         public EndPoint GetLocalEndPoint()

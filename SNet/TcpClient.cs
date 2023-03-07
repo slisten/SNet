@@ -6,7 +6,7 @@ namespace SNet
 {
     public class TcpClient<T> where T: Session,new()
     {
-        public T session;
+        public T Session;
         private Socket socket = null;
         
         public void Start(string ip, int port)
@@ -28,13 +28,13 @@ namespace SNet
 
         private void OnConnect(IAsyncResult ar)
         {
-            session = new T();
+            Session = new T();
             try
             {
                 socket.EndConnect(ar);
                 if (socket.Connected)
                 {
-                    session.Start(socket, null);
+                    Session.Start(socket, null);
                 }
             }
             catch (Exception e)
@@ -45,10 +45,10 @@ namespace SNet
 
         public void Close()
         {
-            if (session != null)
+            if (Session != null)
             {
-                session.Close();
-                session = null;
+                Session.Close();
+                Session = null;
             }
 
             if (socket != null)

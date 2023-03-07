@@ -7,19 +7,20 @@ namespace SNet
 {
     public class TcpServer<T> where T: Session,new()
     {
-        public int backlog = 10;
-        List<T> sessionLst = null;
-        private Socket skt = null;
+        private int backlog = 10;
+        private List<T> sessionList = null;
+        private Socket listenSocket = null;
         public void Start(string ip, int port)
         {
-            sessionLst = new List<T>();
+            sessionList = new List<T>();
             try
             {
-                skt = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                skt.Bind(new IPEndPoint(IPAddress.Parse(ip), port));
-                skt.Listen(backlog);
+                listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                listenSocket.NoDelay = true; 
+                listenSocket.Bind(new IPEndPoint(IPAddress.Parse(ip), port));
+                listenSocket.Listen(backlog);
                 LogHelper.ColorLog(AsyncLogColor.Green, "Server Start...");
-                skt.BeginAccept(OnClientConnect, null);
+                listenSocket.BeginAccept(OnClientConnect, null);
             }
             catch (Exception e)
             {
@@ -32,21 +33,21 @@ namespace SNet
             T session = new T();
             try
             {
-                Socket clientSkt = skt.EndAccept(ar);
-                if (clientSkt.Connected)
+                Socket clientSocket = listenSocket.EndAccept(ar);
+                if (clientSocket.Connected)
                 {
-                    lock (sessionLst)
+                    lock (sessionList)
                     {
-                        sessionLst.Add(session);
+                        sessionList.Add(session);
                     }
 
-                    session.Start(clientSkt, () =>
+                    session.Start(clientSocket, () =>
                     {
-                        if (sessionLst.Contains(session))
+                        if (sessionList.Contains(session))
                         {
-                            lock (sessionLst)
+                            lock (sessionList)
                             {
-                                if (sessionLst.Remove(session))
+                                if (sessionList.Remove(session))
                                 {
                                     LogHelper.ColorLog(AsyncLogColor.Yellow, "Clear ServerSession Success.");
                                 }
@@ -59,7 +60,7 @@ namespace SNet
                     });
                 }
 
-                skt.BeginAccept(OnClientConnect, null);
+                listenSocket.BeginAccept(OnClientConnect, null);
             }
             catch (Exception e)
             {
@@ -69,21 +70,21 @@ namespace SNet
 
         public List<T> GetSessionLst()
         {
-            return sessionLst;
+            return sessionList;
         }
 
-        public void CloseServer()
+        public void Close()
         {
-            for (int i = 0; i < sessionLst.Count; i++)
+            for (int i = 0; i < sessionList.Count; i++)
             {
-                sessionLst[i].Close();
+                sessionList[i].Close();
             }
 
-            sessionLst = null;
-            if (skt != null)
+            sessionList = null;
+            if (listenSocket != null)
             {
-                skt.Close();
-                skt = null;
+                listenSocket.Close();
+                listenSocket = null;
             }
         }
     }

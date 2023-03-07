@@ -5,7 +5,16 @@
         <TargetFramework>netcoreapp2.2</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DefineConstants>TRACE;CLIENT</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DefineConstants>TRACE;CLIENT</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
       <ProjectReference Include="..\SNet\SNet.csproj" />
     </ItemGroup>
 
